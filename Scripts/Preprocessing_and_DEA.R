@@ -38,11 +38,12 @@ data <- GDCprepare(query = query, directory = "data/", summarizedExperiment = TR
 #--------------------- Extract and Prepare Data ---------------------
 # Get expression matrix and clinical data
 ex <- assay(data)
-write.table(ex, file = "results/expression matrix (counts).txt", quote = F, sep = "\t" )
-cli <- as.data.frame(colData(data))[ , -c(25, 58, 60)] #removed treatments, primary_site, disease_type, and papers
-write.table(cli, file = "results/cli.txt", quote = F, sep = "\t")
+write.table(ex, file = "results/ExpressionMatrix(counts).txt", quote = F, sep = "\t" )
+cli <- as.data.frame(colData(data))
+cli <- cli[, !(names(cli) %in% c("treatments", "primary_site", "disease_type"))]
+write.table(cli, file = "results/clinicalData.txt", quote = F, sep = "\t")
 
 # Get gene names and filter for protein-coding genes
 gene <- as.data.frame(SummarizedExperiment::rowRanges(data))
 gene <- gene[, c("gene_id", "gene_name", "gene_type")]
-write.table(gene, file = "results/info gene.txt", quote = F, sep = "\t", row.names = F)
+write.table(gene, file = "results/Geneinfo.txt", quote = F, sep = "\t", row.names = F)
