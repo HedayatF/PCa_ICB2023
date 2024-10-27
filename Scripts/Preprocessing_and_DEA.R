@@ -22,9 +22,6 @@ library(gplots)
 library(biomaRt)
 library(dbplyr)
 library(pheatmap)
-library(survival)
-library(survminer)
-library(survMisc)
 
 #--------------------- Set Working Directory ---------------------
 setwd("D:/Project/prostate/")
