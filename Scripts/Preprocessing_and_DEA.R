@@ -92,27 +92,26 @@ fit2 <- eBayes(fit2)
 
 # Save all significant genes and DEGs
 tT <- topTable(fit2, sort.by = "B", number = Inf)
-degs <- subset(tT, abs(logFC) > 2 & adj.P.Val < 0.01)
-write.table(degs, "results/degs.txt", quote = F, sep = "\t")
-degsUP <- subset(degs, logFC > 2)
-degsDOWN <- subset(degs, logFC < -2)
 
-# Annotate Differential Expression with Gene Names 
-gene <- read.delim("results/Geneinfo.txt") #if not already present
-rownames(gene) <- gene$gene_id
-degs$symbol <- gene[as.character(rownames(degs)), "gene_name"]
-degsDOWN$symbol <- gene[as.character(rownames(degsDOWN)), "gene_name"]
-degsUP$symbol <- gene[as.character(rownames(degsUP)), "gene_name"]
-write.table(degsDOWN, file = "degsDOWN.txt", quote = F, sep = "\t" )
-write.table(degsUP, file = "degsUP.txt", quote = F, sep = "\t" )
+Degs <- subset(tT, abs(logFC) > 1 & adj.P.Val < 0.01)
+Degs$symbol <- gene[as.character(rownames(Degs)), "gene_name"]
+write.table(degs, "results/DEGs.txt", quote = F, sep = "\t")
+
+Degs_up <- subset(Degs, logFC > 1 &  adj.P.Val < 0.01)
+Degs_up$symbol <- gene[as.character(rownames(Degs_up)), "gene_name"]
+write.table(Degs_up, "results/Degs_up.txt", quote = F, sep = "\t")
+
+Degs_down <- subset(Degs, logFC < -1 & adj.P.Val < 0.01)
+Degs_down$symbol <- gene[as.character(rownames(Degs_down)), "gene_name"]
+write.table(Degs_down, "results/Degs_down.txt", quote = F, sep = "\t")
 #now you can use these gene symbols for Enrichment Analysis
 
 #--------------------- Visualization ---------------------
 # Volcano Plot
 volc <- subset(tT)
 volc$Significant <- "No"
-volc$Significant[volc$logFC > 2 & volc$adj.P.Val < 0.01] <- "Up"
-volc$Significant[volc$logFC < -2 & volc$adj.P.Val < 0.01] <- "Down"
+volc$Significant[volc$logFC > 1 & volc$adj.P.Val < 0.01] <- "Up"
+volc$Significant[volc$logFC < -1 & volc$adj.P.Val < 0.01] <- "Down"
 png("plots/volcano plot.png",height = 1600, width = 2000,res=300,units = "px" )
 ggplot(volc, aes(logFC, -log10(adj.P.Val),color =Significant))+ 
   geom_point(size = 1.6,shape = 19) + theme_bw()+ 
@@ -123,27 +122,25 @@ ggplot(volc, aes(logFC, -log10(adj.P.Val),color =Significant))+
 dev.off()
 
 #  Heatmap of DEGs 
-exn <- read.delim("results/ExpressionMatrix(normalized).txt")
-degs <- read.delim("results/degs.txt")
-exn <- data.frame(exn)
-degs$ID <- rownames(degs)
-heatmap_data <- exn[rownames(exn) %in% degs$ID,]
-rownames(heatmap_data) <- gene[as.character(rownames(degs)), "gene_name"]
-degs <- degs[,-8]
-rownames(degs) <- degs$symbol
+bayan <- data.frame(exn)
+Degs$ID <- rownames(Degs)
+heatmapoo <- bayan[rownames(bayan) %in% Degs$ID,]
+rownames(heatmapoo) <- gene[as.character(rownames(Degs)), "gene_name"]
+Degs <- Degs[,-8]
+rownames(Degs) <- Degs$symbol
 
 #making annotation_col:
-coloo <- colnames(heatmap_data) 
+coloo <- colnames(heatmapoo) 
 annotation1 <- data.frame(gr, coloo)
 rownames(annotation1) <- annotation1$coloo
 colnames(annotation1) = "Group"
 annotation1 <- annotation1[,-2,drop=F]
 
-annotation2 <- data.frame(degs$logFC)
-rownames(annotation2) <- degs$symbol
+annotation2 <- data.frame(Degs$logFC)
+rownames(annotation2) <- Degs$symbol
 colnames(annotation2) = "Up/Down regulated"
-annotation2$`Up/Down regulated`[degs$logFC > 2 & degs$adj.P.Val < 0.01] <- "Up"
-annotation2$`Up/Down regulated`[degs$logFC < -2 & degs$adj.P.Val < 0.01] <- "Down"
+annotation2$`Up/Down regulated`[Degs$logFC > 1 & Degs$adj.P.Val < 0.01] <- "Up"
+annotation2$`Up/Down regulated`[Degs$logFC < -1 & Degs$adj.P.Val < 0.01] <- "Down"
 
 ann_colors = list(
   "Group" = c( Normal= "#00CC00",  Cancer= "#FF0000"),
@@ -162,7 +159,7 @@ dev.off()
 
 #--------------------- get expression matrix of DEGs for the next step ---------------------
 exn$symbol <- gene[as.character(rownames(exn)), "gene_name"]
-exn2 <- exn[exn$symbol %in% degs$symbol, ] 
+exn2 <- exn[exn$symbol %in% Degs$symbol, ] 
 rownames(exn2) <- exn2$symbol
 exn2 <- exn2[, -555] #emove symbol column
 write.table(exn2, "Cox_regression/expression_matrix_of_DEGs.txt", sep = "\t", quote = F)
